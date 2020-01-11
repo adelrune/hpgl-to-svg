@@ -1,0 +1,8 @@
+.projectile
+*.pyc
+*.*~
+*.png
+*.hpgl
+*.jpeg
+*.pdf
+*.svg
