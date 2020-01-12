@@ -9,14 +9,25 @@ class Plotter():
     current_pen = 0
     # assumes an US A3 format sheet
     hard_clip = ((0,16640), (0,10365))
-    P1 = hard_clip[0]
-    P2 = hard_clip[1]
+    P1 = hard_clip[0][1]
+    P2 = hard_clip[1][1]
     overridden_coordinates = None
     # False is up, True is Down
     pen_state = False
     canvas = None
+    svg_output = True
 
 plotter = Plotter()
+
+def add_line_to_svg(new_coord):
+    plotter.canvas.add(
+        plotter.canvas.line(
+            # need to invert y values because svg's y starts from the top and hpgl from the bottom
+            [plotter.pen_coord[0], plotter.hard_clip[1][1] - plotter.pen_coord[1]],
+            (new_coord[0], plotter.hard_clip[1][1] - new_coord[1]),
+            stroke=svgwrite.rgb(*plotter.pen_colors[plotter.current_pen])
+        )
+    )
 
 def parse_file(inname, outname):
     plotter.canvas = svgwrite.Drawing(outname, profile='tiny')
@@ -43,8 +54,8 @@ def hpgl_pa(*args):
     if len(args) < 2:
         return
     new_coord = list(map(lambda x: int(x), args[0:2]))
-    if plotter.pen_state:
-        plotter.canvas.add(plotter.canvas.line(plotter.pen_coord, new_coord, stroke=svgwrite.rgb(*plotter.pen_colors[plotter.current_pen])))
+    if plotter.pen_state and plotter.svg_output:
+        add_line_to_svg(new_coord)
     plotter.pen_coord = new_coord
     hpgl_pa(*args[2:])
 
