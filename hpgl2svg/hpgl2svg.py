@@ -16,6 +16,7 @@ class Plotter():
     pen_state = False
     canvas = None
     svg_output = True
+    abs_plot = True
 
 plotter = Plotter()
 
@@ -45,40 +46,64 @@ def parse_file(inname, outname):
             print("Unsupported instruction : {}".format(instruction))
     plotter.canvas.save()
 
+
+def hpgl_df():
+    # hpgl_sc()
+    # hpgl_si()
+    # hpgl_sl()
+    # hpgl_sm()
+    # hpgl_ss()
+    pass
+
 def hpgl_in(*args):
-    plotter.P1 = plotter.hard_clip[0]
-    plotter.P2 = plotter.hard_clip[1]
+    """IN resets pen position, scaling and user defined scaling points."""
+    hpgl_df()
+    hpgl_pa(0,0)
+    hpgl_pu()
+    # hpgl_ip()
+    # hpgl_ro(0)
+    plotter.P1 = plotter.hard_clip[0][1]
+    plotter.P2 = plotter.hard_clip[1][1]
+
     overridden_coordinates = None
 
+def hpgl_ip():
+    pass
+
 def hpgl_pa(*args):
-    if len(args) < 2:
+    plotter.abs_plot = True
+    move(*args)
+
+def hpgl_pr(*args):
+    plotter.abs_plot = False
+    move(*args)
+
+def move(*coords):
+    """moves the pen, adds line to the svg if the pen is down"""
+    if len(coords) < 2:
         return
-    new_coord = list(map(lambda x: int(x), args[0:2]))
+    if not plotter.abs_plot:
+        # if we are in relative plot mode, converts the arguments to relative
+        coords = [int(arg) + plotter.pen_coord[i%2] for i, arg in enumerate(coords)]
+    new_coord = list(map(lambda x: int(x), coords[0:2]))
     if plotter.pen_state and plotter.svg_output:
         add_line_to_svg(new_coord)
     plotter.pen_coord = new_coord
-    hpgl_pa(*args[2:])
-
-def hpgl_pr(*args):
-    if len(args) < 2:
-        return
-    pa_args = [int(args[i]) + plotter.pen_coord[i] for i in range(2)]
-    hpgl_pa(*prargs)
-    hpgl_pr(args[2:])
+    move(*coords[2:])
 
 def hpgl_pu(*coords):
     plotter.pen_state = False
-    hpgl_pa(*coords)
+    move(*coords)
 
 def hpgl_pd(*coords):
     plotter.pen_state = True
-    hpgl_pa(*coords)
+    move(*coords)
 
 def hpgl_sp(num):
     last_state = plotter.pen_state
     hpgl_pu()
     plotter.current_pen = int(num) - 1
-    if plotter.pen_state:
+    if last_state:
         hpgl_pd()
 
 parse_file(argv[1], argv[2])
