@@ -45,7 +45,7 @@ proc make_plotter(): Plotter =
     current_pen: 0,
     p1: [0.0, 0.0],
     p2: [max_x, max_y],
-    hard_clip: [[0.0, 0.0], [max_x, max_y]],
+    hard_clip: [[0.0, max_x], [0.0, max_y]],
     pen_state: PenState.up,
     canvas: "",
     abs_plot: true
@@ -77,6 +77,9 @@ proc move(coords: seq[float]): void =
     # if we are in relative plot mode, converts the arguments to relative
     new_coord[0] += pen_plotter.pen_coord[0]
     new_coord[1] += pen_plotter.pen_coord[1]
+  # constrain movement of the pen to plotter hard clip limits
+  new_coord[0] = clamp(new_coord[0], pen_plotter.hard_clip[0][0], pen_plotter.hard_clip[0][1])
+  new_coord[1] = clamp(new_coord[1], pen_plotter.hard_clip[1][0], pen_plotter.hard_clip[1][1])
 
   if pen_plotter.pen_state == Penstate.down:
     add_line_to_canvas(new_coord)
@@ -162,7 +165,8 @@ proc hpgl_aa(params: seq[float]): void =
   if chord_angle < 0.5:
     chord_angle = 0.5
 
-  let num_chords = abs(int(ceil(sweep_angle / chord_angle)))
+  let num_chords = int(ceil(abs(sweep_angle) / chord_angle))
+  echo num_chords
   chord_angle = degToRad(chord_angle)
   #transform everything to vector stuff
   let x_comp = pen_plotter.pen_coord[0] - params[0]
