@@ -13,6 +13,7 @@ The script supports the following instructions:
 - PD
 - SP
 - AA
+- AR
 
 ## Goals
 
@@ -20,7 +21,6 @@ The primary goal of this projet would be to emulate the full featureset of the H
 
 ### Missing instructions
 
-- AR
 - CA
 - CI
 - CP

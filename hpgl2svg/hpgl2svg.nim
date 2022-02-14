@@ -166,7 +166,6 @@ proc hpgl_aa(params: seq[float]): void =
     chord_angle = 0.5
 
   let num_chords = int(ceil(abs(sweep_angle) / chord_angle))
-  echo num_chords
   chord_angle = degToRad(chord_angle)
   #transform everything to vector stuff
   let x_comp = pen_plotter.pen_coord[0] - params[0]
@@ -174,7 +173,7 @@ proc hpgl_aa(params: seq[float]): void =
   #finds the magnitude of the vector going from center to current pen position
   let vector_magnitude = sqrt(x_comp^2 + y_comp^2)
   #finds the angle of that vector
-  var current_angle = arctan(y_comp/x_comp)
+  var current_angle = arctan2(y_comp, x_comp)
   for chord in 1..num_chords:
     if sweep_angle > 0:
       current_angle = current_angle + chord_angle
@@ -187,6 +186,12 @@ proc hpgl_aa(params: seq[float]): void =
     move(@[new_x, new_y])
   # resets the previous plot mode
   pen_plotter.abs_plot = previous_plot_mode
+
+proc hpgl_ar(params: seq[float]): void =
+  # AA: Arc Relative : draw an arc subdivided in chords
+  # first arg and second : center position of the arc in x and y (relative to pen position), third: portion of arc drawn in degrees, fourth: chord lenght in degrees (0.5 to 180)
+  var absolute_coords = @[params[0] + pen_plotter.pen_coord[0], params[1] + pen_plotter.pen_coord[1]]
+  hpgl_aa(concat(absolute_coords, params[2..^1]))
 
 proc parse_file(fname: string): void =
    var hpgl_instructions = readFile(fname).replace("\n","").replace(" ","").split(";")
@@ -216,6 +221,8 @@ proc execute_line(instruction: string): void =
       hpgl_pr(params)
     of "AA":
       hpgl_aa(params)
+    of "AR":
+      hpgl_ar(params)
 
 parse_file(paramStr(1))
 
